@@ -4,7 +4,7 @@ Handles the complete tagging workflow for fashion images.
 """
 
 import json
-from typing import Dict, Optional
+from typing import Dict
 from pathlib import Path
 
 from image_tagging.classifier import tag_category
@@ -14,12 +14,7 @@ class ImageTagger:
     """Main class for tagging fashion images with categories and attributes."""
     
     def __init__(self, tags_dir: str = "tags"):
-        """
-        Initialize the ImageTagger with tag configuration files.
-        
-        Args:
-            tags_dir: Directory containing tag JSON files
-        """
+        """Initialize with tag configuration files."""
         self.tags_dir = Path(tags_dir)
         self._load_tag_configs()
     
@@ -37,65 +32,28 @@ class ImageTagger:
         with open(self.tags_dir / "generic_attributes.json", "r") as f:
             self.generic_attributes_data = json.load(f)
     
-    @staticmethod
-    def _extract_category_value(formatted_label: str) -> str:
-        """
-        Extract the actual category value from the formatted label.
-        
-        Example: 'outfit with Category as upperWear' -> 'upperWear'
-        
-        Args:
-            formatted_label: Formatted label string
-            
-        Returns:
-            Extracted category value
-        """
+    def _extract_category_value(self, formatted_label: str) -> str:
+        """Extract category value from formatted label (e.g., 'outfit with Category as upperWear' -> 'upperWear')."""
         if " as " in formatted_label:
             return formatted_label.split(" as ")[-1]
         return formatted_label
     
     def _tag_category_group(self, image_path: str) -> str:
-        """
-        Tag the category group (e.g., upperWear, bottomWear).
-        
-        Args:
-            image_path: Path to the image file
-            
-        Returns:
-            Category group name
-        """
+        """Tag the category group (e.g., upperWear, bottomWear)."""
         category_keys = list(self.categories_data["categoryGroups"].keys())
         category_name_formatted = tag_category("Category", category_keys, image_path)
         category_name = self._extract_category_value(category_name_formatted)
         return category_name
     
     def _tag_category(self, image_path: str, category_group: str) -> str:
-        """
-        Tag the specific category within a category group.
-        
-        Args:
-            image_path: Path to the image file
-            category_group: The category group name
-            
-        Returns:
-            Category name
-        """
+        """Tag the specific category within a category group."""
         categories = self.categories_data["categoryGroups"][category_group]["categories"]
         sub_category_name_formatted = tag_category(category_group, categories, image_path)
         sub_category_name = self._extract_category_value(sub_category_name_formatted)
         return sub_category_name
     
     def _tag_specific_attributes(self, image_path: str, category_group: str) -> Dict[str, str]:
-        """
-        Tag specific attributes for the given category group.
-        
-        Args:
-            image_path: Path to the image file
-            category_group: The category group name
-            
-        Returns:
-            Dictionary of specific attributes
-        """
+        """Tag specific attributes for the given category group."""
         specific_attributes = {}
         
         if category_group not in self.specific_attributes_data:
@@ -117,15 +75,7 @@ class ImageTagger:
         return specific_attributes
     
     def _tag_generic_attributes(self, image_path: str) -> Dict[str, str]:
-        """
-        Tag generic attributes (color, season, material, etc.).
-        
-        Args:
-            image_path: Path to the image file
-            
-        Returns:
-            Dictionary of generic attributes
-        """
+        """Tag generic attributes (color, season, material, etc.)."""
         generic_attributes = {}
         
         for attribute in self.generic_attributes_data:
@@ -144,19 +94,7 @@ class ImageTagger:
         return generic_attributes
     
     def tag_image(self, image_path: str) -> Dict[str, any]:
-        """
-        Tag an image with all categories and attributes.
-        
-        Args:
-            image_path: Path to the image file (can be local path or URL)
-            
-        Returns:
-            Flattened dictionary containing:
-                - categoryGroup: str
-                - category: str
-                - All specific attributes as key-value pairs
-                - All generic attributes as key-value pairs
-        """
+        """Tag an image with all categories and attributes. Returns flattened dictionary with categoryGroup, category, and all attributes."""
         # Tag category group
         category_group = self._tag_category_group(image_path)
         
@@ -182,45 +120,10 @@ class ImageTagger:
         result.update(generic_attributes)
         
         return result
-    
-    def tag_image_and_save(self, image_path: str, output_path: Optional[str] = None) -> Dict[str, any]:
-        """
-        Tag an image and save the results to a JSON file.
-        
-        Args:
-            image_path: Path to the image file
-            output_path: Optional path to save the JSON file (default: selected_tags.json)
-            
-        Returns:
-            Dictionary containing all tags
-        """
-        result = self.tag_image(image_path)
-        
-        if output_path is None:
-            output_path = "selected_tags.json"
-        
-        with open(output_path, "w") as f:
-            json.dump(result, f, indent=2)
-        
-        return result
 
 
-def tag_image(image_path: str, tags_dir: str = "tags", save_output: bool = False) -> Dict[str, any]:
-    """
-    Convenience function to tag an image.
-    
-    Args:
-        image_path: Path to the image file (can be local path or URL)
-        tags_dir: Directory containing tag JSON files
-        save_output: Whether to save results to selected_tags.json
-        
-    Returns:
-        Dictionary containing all tags
-    """
+def tag_image(image_path: str, tags_dir: str = "tags") -> Dict[str, any]:
+    """Convenience function to tag an image."""
     tagger = ImageTagger(tags_dir=tags_dir)
-    
-    if save_output:
-        return tagger.tag_image_and_save(image_path)
-    else:
-        return tagger.tag_image(image_path)
+    return tagger.tag_image(image_path)
 
