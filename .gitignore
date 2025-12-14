@@ -8,4 +8,10 @@ venv/
 env/
 ENV/
 .venv
+
+# Environment variables
 .env
+
+# Node modules
+node_modules/
+frontend/node_modules/
