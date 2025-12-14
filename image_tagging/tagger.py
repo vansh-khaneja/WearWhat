@@ -10,120 +10,134 @@ from pathlib import Path
 from image_tagging.classifier import tag_category
 
 
-class ImageTagger:
-    """Main class for tagging fashion images with categories and attributes."""
+def _load_tag_configs(tags_dir: str = "tags") -> Dict:
+    """Load all tag configuration files."""
+    tags_path = Path(tags_dir)
     
-    def __init__(self, tags_dir: str = "tags"):
-        """Initialize with tag configuration files."""
-        self.tags_dir = Path(tags_dir)
-        self._load_tag_configs()
+    # Load categories
+    with open(tags_path / "categories.json", "r") as f:
+        categories_data = json.load(f)
     
-    def _load_tag_configs(self):
-        """Load all tag configuration files."""
-        # Load categories
-        with open(self.tags_dir / "categories.json", "r") as f:
-            self.categories_data = json.load(f)
-        
-        # Load specific attributes
-        with open(self.tags_dir / "specific_attributes.json", "r") as f:
-            self.specific_attributes_data = json.load(f)
-        
-        # Load generic attributes
-        with open(self.tags_dir / "generic_attributes.json", "r") as f:
-            self.generic_attributes_data = json.load(f)
+    # Load specific attributes
+    with open(tags_path / "specific_attributes.json", "r") as f:
+        specific_attributes_data = json.load(f)
     
-    def _extract_category_value(self, formatted_label: str) -> str:
-        """Extract category value from formatted label (e.g., 'outfit with Category as upperWear' -> 'upperWear')."""
-        if " as " in formatted_label:
-            return formatted_label.split(" as ")[-1]
-        return formatted_label
+    # Load generic attributes
+    with open(tags_path / "generic_attributes.json", "r") as f:
+        generic_attributes_data = json.load(f)
     
-    def _tag_category_group(self, image_path: str) -> str:
-        """Tag the category group (e.g., upperWear, bottomWear)."""
-        category_keys = list(self.categories_data["categoryGroups"].keys())
-        category_name_formatted = tag_category("Category", category_keys, image_path)
-        category_name = self._extract_category_value(category_name_formatted)
-        return category_name
+    return {
+        "categories": categories_data,
+        "specific_attributes": specific_attributes_data,
+        "generic_attributes": generic_attributes_data
+    }
+
+
+def _extract_category_value(formatted_label: str) -> str:
+    """Extract category value from formatted label (e.g., 'outfit with Category as upperWear' -> 'upperWear')."""
+    if " as " in formatted_label:
+        return formatted_label.split(" as ")[-1]
+    return formatted_label
+
+
+def _tag_category_group(image_path: str, categories_data: Dict) -> str:
+    """Tag the category group (e.g., upperWear, bottomWear)."""
+    category_keys = list(categories_data["categoryGroups"].keys())
+    category_name_formatted = tag_category("Category", category_keys, image_path)
+    category_name = _extract_category_value(category_name_formatted)
+    return category_name
+
+
+def _tag_category(image_path: str, category_group: str, categories_data: Dict) -> str:
+    """Tag the specific category within a category group."""
+    categories = categories_data["categoryGroups"][category_group]["categories"]
+    sub_category_name_formatted = tag_category(category_group, categories, image_path)
+    sub_category_name = _extract_category_value(sub_category_name_formatted)
+    return sub_category_name
+
+
+def _tag_specific_attributes(image_path: str, category_group: str, specific_attributes_data: Dict) -> Dict[str, str]:
+    """Tag specific attributes for the given category group."""
+    specific_attributes = {}
     
-    def _tag_category(self, image_path: str, category_group: str) -> str:
-        """Tag the specific category within a category group."""
-        categories = self.categories_data["categoryGroups"][category_group]["categories"]
-        sub_category_name_formatted = tag_category(category_group, categories, image_path)
-        sub_category_name = self._extract_category_value(sub_category_name_formatted)
-        return sub_category_name
-    
-    def _tag_specific_attributes(self, image_path: str, category_group: str) -> Dict[str, str]:
-        """Tag specific attributes for the given category group."""
-        specific_attributes = {}
-        
-        if category_group not in self.specific_attributes_data:
-            return specific_attributes
-        
-        for attribute in self.specific_attributes_data[category_group]:
-            attribute_options = self.specific_attributes_data[category_group][attribute]
-            # Skip attributes with empty lists
-            if not attribute_options or len(attribute_options) == 0:
-                continue
-            attribute_value_formatted = tag_category(
-                attribute,
-                attribute_options,
-                image_path
-            )
-            attribute_value = self._extract_category_value(attribute_value_formatted)
-            specific_attributes[attribute] = attribute_value
-        
+    if category_group not in specific_attributes_data:
         return specific_attributes
     
-    def _tag_generic_attributes(self, image_path: str) -> Dict[str, str]:
-        """Tag generic attributes (color, season, material, etc.)."""
-        generic_attributes = {}
-        
-        for attribute in self.generic_attributes_data:
-            attribute_options = self.generic_attributes_data[attribute]
-            # Skip attributes with empty lists
-            if not attribute_options or len(attribute_options) == 0:
-                continue
-            attribute_value_formatted = tag_category(
-                attribute,
-                attribute_options,
-                image_path
-            )
-            attribute_value = self._extract_category_value(attribute_value_formatted)
-            generic_attributes[attribute] = attribute_value
-        
-        return generic_attributes
+    for attribute in specific_attributes_data[category_group]:
+        attribute_options = specific_attributes_data[category_group][attribute]
+        # Skip attributes with empty lists
+        if not attribute_options or len(attribute_options) == 0:
+            continue
+        attribute_value_formatted = tag_category(
+            attribute,
+            attribute_options,
+            image_path
+        )
+        attribute_value = _extract_category_value(attribute_value_formatted)
+        specific_attributes[attribute] = attribute_value
     
-    def tag_image(self, image_path: str) -> Dict[str, any]:
-        """Tag an image with all categories and attributes. Returns flattened dictionary with categoryGroup, category, and all attributes."""
-        # Tag category group
-        category_group = self._tag_category_group(image_path)
-        
-        # Tag specific category
-        category = self._tag_category(image_path, category_group)
-        
-        # Tag specific attributes
-        specific_attributes = self._tag_specific_attributes(image_path, category_group)
-        
-        # Tag generic attributes
-        generic_attributes = self._tag_generic_attributes(image_path)
-        
-        # Build flattened result dictionary
-        result = {
-            "categoryGroup": category_group,
-            "category": category
-        }
-        
-        # Add all specific attributes directly to result
-        result.update(specific_attributes)
-        
-        # Add all generic attributes directly to result
-        result.update(generic_attributes)
-        
-        return result
+    return specific_attributes
+
+
+def _tag_generic_attributes(image_path: str, generic_attributes_data: Dict) -> Dict[str, str]:
+    """Tag generic attributes (color, season, material, etc.)."""
+    generic_attributes = {}
+    
+    for attribute in generic_attributes_data:
+        attribute_options = generic_attributes_data[attribute]
+        # Skip attributes with empty lists
+        if not attribute_options or len(attribute_options) == 0:
+            continue
+        attribute_value_formatted = tag_category(
+            attribute,
+            attribute_options,
+            image_path
+        )
+        attribute_value = _extract_category_value(attribute_value_formatted)
+        generic_attributes[attribute] = attribute_value
+    
+    return generic_attributes
 
 
 def tag_image(image_path: str, tags_dir: str = "tags") -> Dict[str, any]:
-    """Convenience function to tag an image."""
-    tagger = ImageTagger(tags_dir=tags_dir)
-    return tagger.tag_image(image_path)
-
+    """
+    Tag an image with all categories and attributes.
+    
+    Args:
+        image_path: Path to the image file to tag.
+        tags_dir: Directory containing tag configuration files.
+    
+    Returns:
+        Flattened dictionary with categoryGroup, category, and all attributes.
+    """
+    # Load tag configs
+    configs = _load_tag_configs(tags_dir)
+    categories_data = configs["categories"]
+    specific_attributes_data = configs["specific_attributes"]
+    generic_attributes_data = configs["generic_attributes"]
+    
+    # Tag category group
+    category_group = _tag_category_group(image_path, categories_data)
+    
+    # Tag specific category
+    category = _tag_category(image_path, category_group, categories_data)
+    
+    # Tag specific attributes
+    specific_attributes = _tag_specific_attributes(image_path, category_group, specific_attributes_data)
+    
+    # Tag generic attributes
+    generic_attributes = _tag_generic_attributes(image_path, generic_attributes_data)
+    
+    # Build flattened result dictionary
+    result = {
+        "categoryGroup": category_group,
+        "category": category
+    }
+    
+    # Add all specific attributes directly to result
+    result.update(specific_attributes)
+    
+    # Add all generic attributes directly to result
+    result.update(generic_attributes)
+    
+    return result
