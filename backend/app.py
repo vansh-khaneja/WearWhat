@@ -6,6 +6,7 @@ Main application file for the WearWhat backend API.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from endpoints.authentication.routes import router as authentication_router
+from endpoints.outfit.routes import router as outfit_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -25,6 +26,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(authentication_router)
+app.include_router(outfit_router)
 
 
 @app.get("/")

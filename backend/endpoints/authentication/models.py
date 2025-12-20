@@ -4,6 +4,8 @@ Request and response schemas for API endpoints.
 """
 
 from pydantic import BaseModel
+from typing import Optional
+
 
 
 class SignUpRequest(BaseModel):
@@ -27,6 +29,8 @@ class SignUpResponse(BaseModel):
 
 class LoginResponse(BaseModel):
     """Response model for user login"""
-    user_id: str
+    user_id: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
     message: str = "Login successful"
 

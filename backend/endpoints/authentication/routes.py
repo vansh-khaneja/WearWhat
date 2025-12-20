@@ -63,13 +63,13 @@ async def login_endpoint(request: LoginRequest):
         "password": request.password
     }
     
-    user_id = login(auth_data)
+    user_id, username, email = login(auth_data)
     
-    if not user_id:
+    if not user_id or not username or not email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
     
-    return LoginResponse(user_id=user_id)
+    return LoginResponse(user_id=user_id, username=username, email=email)
 

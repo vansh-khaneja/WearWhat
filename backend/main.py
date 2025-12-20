@@ -12,13 +12,13 @@ from uuid import uuid4
 
 # url, public_id = upload_image("test.jpg")
 
-# wardrobe_id = "abc123"
+wardrobe_id = "test"
 
 # document = {"wardrobe_id": wardrobe_id, "item_id": str(uuid4()), "image_url": url, "tags": tagged_dict}
 
-# response = upload_item(document)
+response = get_items(wardrobe_id)
 
-# print(response)
+print(response)
 
 # items = get_items(wardrobe_id)
 # for item in items:
@@ -41,7 +41,7 @@ from uuid import uuid4
 # print(f"Sign up successful. User ID: {response}")
 
 # Login example
-login_auth = {"email": "test@gmmail.com", "password": "test123"}
-login_result = login(login_auth)
-print(f"Login result: {login_result}")
+# login_auth = {"email": "test@gmmail.com", "password": "test123"}
+# login_result = login(login_auth)
+# print(f"Login result: {login_result}")
 

@@ -4,7 +4,7 @@ Handles user CRUD operations in MongoDB.
 """
 
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 from datetime import datetime
 from uuid import uuid4
 from pymongo import MongoClient
@@ -91,7 +91,7 @@ def sign_up(auth: Dict[str, Any]) -> str:
     return user_id
 
 
-def login(auth: Dict[str, Any]) -> bool:
+def login(auth: Dict[str, Any]):
     """
     Login a user by verifying email and password.
     
@@ -99,25 +99,25 @@ def login(auth: Dict[str, Any]) -> bool:
         auth: Dictionary containing 'email' and 'password' keys.
     
     Returns:
-        True if credentials are valid, False otherwise.
+        The user_id, username and email as a tuple.
     """
     email = auth.get("email")
     password = auth.get("password")
     
     if not email or not password:
-        return False
+        raise ValueError("Email and password are required")
     
     # Find user by email
     user = users_collection.find_one({"email": email})
     
     if not user:
-        return False
+        raise ValueError("User not found")
     
     # Verify password (plain text comparison)
     if not verify_password(password, user.get("password")):
-        return False
+        raise ValueError("Invalid password")
     
-    return user.get("user_id")
+    return user.get("user_id"), user.get("username"), user.get("email")
 
 
 def delete_user(user_id: str) -> int:
