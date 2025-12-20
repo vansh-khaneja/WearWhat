@@ -1,3 +1,6 @@
 cloudinary
 python-dotenv
 pymongo[srv]
+bcrypt
+fastapi
+uvicorn[standard]
