@@ -4,3 +4,4 @@ pymongo[srv]
 bcrypt
 fastapi
 uvicorn[standard]
+python-multipart
