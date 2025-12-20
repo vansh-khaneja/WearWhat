@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { login, signUp } from '@/lib/api';
 
@@ -22,6 +23,12 @@ export default function AuthPage() {
     try {
       const response = await login({ email, password });
       localStorage.setItem('user_id', response.user_id);
+      if (response.email) {
+        localStorage.setItem('user_email', response.email);
+      }
+      if (response.username) {
+        localStorage.setItem('user_username', response.username);
+      }
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -74,11 +81,13 @@ export default function AuthPage() {
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
           <a href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
-              <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-[#0095da]" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
-              </svg>
-            </div>
+            <Image 
+              src="/logo.png" 
+              alt="WearWhat Logo" 
+              width={40} 
+              height={40} 
+              className="object-contain"
+            />
             <span className="text-2xl font-bold text-white">WearWhat</span>
           </a>
         </div>
