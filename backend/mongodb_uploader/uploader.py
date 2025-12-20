@@ -25,7 +25,8 @@ database: Database = mongodb_client[DB_NAME]
 if OUTFITS_COLLECTION_NAME not in database.list_collection_names():
     database.create_collection(OUTFITS_COLLECTION_NAME)
 
-collection: Collection = database[OUTFITS_COLLECTION_NAME]
+outfits_collection: Collection = database[OUTFITS_COLLECTION_NAME]
+
 
 
 def upload_item(outfit: Dict[str, Any]) -> str:
@@ -38,7 +39,7 @@ def upload_item(outfit: Dict[str, Any]) -> str:
     Returns:
         The inserted document ID as a string.
     """
-    result = collection.insert_one(outfit)
+    result = outfits_collection.insert_one(outfit)
     return str(result.inserted_id)
 
 
@@ -53,7 +54,7 @@ def get_item(item_id: str) -> str:
         The document dictionary if found, None otherwise.
     """
 
-    result = collection.find_one({"item_id": item_id})
+    result = outfits_collection.find_one({"item_id": item_id})
     return result
 
 
@@ -62,15 +63,12 @@ def delete_item(item_id: str) -> int:
     Delete a document from MongoDB by ID.
     
     Args:
-        outfit_id: The ID of the document to delete (can be string or ObjectId).
+        item_id: The ID of the document to delete.
     
     Returns:
         The number of documents deleted (0 or 1).
     """
-    # Convert string ID to ObjectId if needed
-
-    
-    result = collection.delete_one({"item_id": item_id})
+    result = outfits_collection.delete_one({"item_id": item_id})
     return result.deleted_count
 
 
@@ -84,21 +82,8 @@ def get_items(wardrobe_id: str) -> List[Dict[str, Any]]:
     Returns:
         List of documents if found, empty list otherwise.
     """
-    result = collection.find({"wardrobe_id": wardrobe_id})
+    result = outfits_collection.find({"wardrobe_id": wardrobe_id})
     return list(result)
-
-def delete_item(item_id: str) -> int:
-    """
-    Delete a document from MongoDB by ID.
-    
-    Args:
-        item_id: The ID of the document to delete.
-    
-    Returns:
-        The number of documents deleted (0 or 1).
-    """
-    result = collection.delete_one({"item_id": item_id})
-    return result.deleted_count
 
 def delete_items(wardrobe_id: str) -> int:
     """
@@ -110,7 +95,7 @@ def delete_items(wardrobe_id: str) -> int:
     Returns:
         The number of documents deleted (0 or 1).
     """
-    result = collection.delete_many({"wardrobe_id": wardrobe_id})
+    result = outfits_collection.delete_many({"wardrobe_id": wardrobe_id})
     return result.deleted_count
 
 
@@ -125,6 +110,5 @@ def update_item(item_id: str, item: Dict[str, Any]) -> int:
     Returns:
         The number of documents updated (0 or 1).
     """
-    result = collection.update_one({"item_id": item_id}, {"$set": item})
+    result = outfits_collection.update_one({"item_id": item_id}, {"$set": item})
     return result.modified_count
-
