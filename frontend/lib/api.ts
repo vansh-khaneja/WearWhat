@@ -142,3 +142,102 @@ export async function deleteOutfit(outfitId: string): Promise<DeleteOutfitRespon
   return response.json();
 }
 
+export interface UpdateOutfitResponse {
+  result: boolean;
+  message: string;
+}
+
+/**
+ * Update an outfit's tags
+ */
+export async function updateOutfit(outfitId: string, tags: Record<string, any>): Promise<UpdateOutfitResponse> {
+  const response = await fetch(`${API_BASE_URL}/outfit/update-outfit`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      outfit_id: outfitId,
+      tags: tags
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to update outfit' }));
+    throw new Error(error.detail || 'Failed to update outfit');
+  }
+
+  return response.json();
+}
+export interface SuggestOutfitRequest {
+  wardrobe_id: string;
+  temperature?: number;
+  query?: string;
+}
+
+export interface SuggestOutfitResponse {
+  outfits: Outfit[];
+  composite_image_url?: string;
+  result: boolean;
+  message: string;
+}
+
+/**
+ * Get suggested outfits
+ */
+export async function suggestOutfits(wardrobeId: string, temperature?: number, query?: string): Promise<SuggestOutfitResponse> {
+  const response = await fetch(`${API_BASE_URL}/outfit/suggest-outfit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      wardrobe_id: wardrobeId,
+      temperature: temperature,
+      query: query
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to get suggestions' }));
+    throw new Error(error.detail || 'Failed to get suggestions');
+  }
+
+  return response.json();
+}
+
+export interface WeeklyOutfitDay {
+  day: string;
+  outfit: Outfit;
+  composite_image_url?: string;
+}
+
+export interface PlanWeekResponse {
+  weekly_outfits: WeeklyOutfitDay[];
+  result: boolean;
+  message: string;
+}
+
+/**
+ * Generate weekly outfit plan
+ */
+export async function planWeek(wardrobeId: string, temperature?: number): Promise<PlanWeekResponse> {
+  const response = await fetch(`${API_BASE_URL}/outfit/plan-week`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      wardrobe_id: wardrobeId,
+      temperature: temperature
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to plan week' }));
+    throw new Error(error.detail || 'Failed to plan week');
+  }
+
+  return response.json();
+}
+
