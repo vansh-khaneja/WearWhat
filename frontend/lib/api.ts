@@ -27,44 +27,91 @@ export interface LoginResponse {
   message: string;
 }
 
-/**
- * Sign up a new user
- */
-export async function signUp(data: SignUpRequest): Promise<SignUpResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
+async function parseJsonSafe(response: Response): Promise<any | null> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function handleUnauthorized() {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_username');
+    } catch {}
+    // Redirect with reason for middleware and UI to allow re-auth
+    const url = new URL(window.location.origin + '/login');
+    url.searchParams.set('reason', 'session-expired');
+    window.location.href = url.toString();
+  }
+}
+
+async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'include',
+    ...init,
   });
 
+  if (response.status === 401) {
+    handleUnauthorized();
+    const err = await parseJsonSafe(response);
+    throw new Error((err && err.detail) || 'Unauthorized');
+  }
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Sign up failed' }));
-    throw new Error(error.detail || 'Sign up failed');
+    const err = await parseJsonSafe(response);
+    throw new Error((err && err.detail) || 'Request failed');
   }
 
   return response.json();
 }
 
 /**
+ * Sign up a new user
+ */
+export async function signUp(data: SignUpRequest): Promise<SignUpResponse> {
+  return apiFetch<SignUpResponse>('/auth/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * Login a user
  */
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  return apiFetch<LoginResponse>('/auth/login', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get current session using cookie
+ */
+export async function getSession(): Promise<LoginResponse | null> {
+  const response = await fetch(`${API_BASE_URL}/auth/session`, {
+    method: 'GET',
+    credentials: 'include',
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Login failed' }));
-    throw new Error(error.detail || 'Invalid email or password');
+    return null;
   }
 
   return response.json();
+}
+
+/**
+ * Logout: clears auth cookie
+ */
+export async function logout(): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/auth/logout', { method: 'POST' });
 }
 
 export interface UploadOutfitResponse {
@@ -90,35 +137,19 @@ export interface GetOutfitsResponse {
 export async function uploadOutfit(file: File, wardrobeId: string): Promise<UploadOutfitResponse> {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('wardrobe_id', wardrobeId);
-
-  const response = await fetch(`${API_BASE_URL}/outfit/upload-outfit`, {
+  // wardrobeId ignored by backend; cookie-scoped user_id is used
+  return apiFetch<UploadOutfitResponse>('/outfit/upload-outfit', {
     method: 'POST',
     body: formData,
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-    throw new Error(error.detail || 'Failed to upload outfit');
-  }
-
-  return response.json();
 }
 
 /**
  * Get all outfits for a wardrobe
  */
 export async function getOutfits(wardrobeId: string): Promise<GetOutfitsResponse> {
-  const response = await fetch(`${API_BASE_URL}/outfit/get-outfits?wardrobe_id=${wardrobeId}`, {
-    method: 'GET',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to fetch outfits' }));
-    throw new Error(error.detail || 'Failed to fetch outfits');
-  }
-
-  return response.json();
+  // wardrobeId ignored by backend; cookie-scoped user_id is used
+  return apiFetch<GetOutfitsResponse>('/outfit/get-outfits', { method: 'GET' });
 }
 
 export interface DeleteOutfitResponse {
@@ -130,16 +161,7 @@ export interface DeleteOutfitResponse {
  * Delete an outfit
  */
 export async function deleteOutfit(outfitId: string): Promise<DeleteOutfitResponse> {
-  const response = await fetch(`${API_BASE_URL}/outfit/delete-outfit?outfit_id=${outfitId}`, {
-    method: 'DELETE',
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to delete outfit' }));
-    throw new Error(error.detail || 'Failed to delete outfit');
-  }
-
-  return response.json();
+  return apiFetch<DeleteOutfitResponse>(`/outfit/delete-outfit?outfit_id=${outfitId}`, { method: 'DELETE' });
 }
 
 export interface UpdateOutfitResponse {
@@ -151,23 +173,11 @@ export interface UpdateOutfitResponse {
  * Update an outfit's tags
  */
 export async function updateOutfit(outfitId: string, tags: Record<string, any>): Promise<UpdateOutfitResponse> {
-  const response = await fetch(`${API_BASE_URL}/outfit/update-outfit`, {
+  return apiFetch<UpdateOutfitResponse>('/outfit/update-outfit', {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      outfit_id: outfitId,
-      tags: tags
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ outfit_id: outfitId, tags }),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to update outfit' }));
-    throw new Error(error.detail || 'Failed to update outfit');
-  }
-
-  return response.json();
 }
 export interface SuggestOutfitRequest {
   wardrobe_id: string;
@@ -186,24 +196,11 @@ export interface SuggestOutfitResponse {
  * Get suggested outfits
  */
 export async function suggestOutfits(wardrobeId: string, temperature?: number, query?: string): Promise<SuggestOutfitResponse> {
-  const response = await fetch(`${API_BASE_URL}/outfit/suggest-outfit`, {
+  return apiFetch<SuggestOutfitResponse>('/outfit/suggest-outfit', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      wardrobe_id: wardrobeId,
-      temperature: temperature,
-      query: query
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ wardrobe_id: wardrobeId, temperature, query }),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to get suggestions' }));
-    throw new Error(error.detail || 'Failed to get suggestions');
-  }
-
-  return response.json();
 }
 
 export interface WeeklyOutfitDay {
@@ -222,22 +219,10 @@ export interface PlanWeekResponse {
  * Generate weekly outfit plan
  */
 export async function planWeek(wardrobeId: string, temperature?: number): Promise<PlanWeekResponse> {
-  const response = await fetch(`${API_BASE_URL}/outfit/plan-week`, {
+  return apiFetch<PlanWeekResponse>('/outfit/plan-week', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      wardrobe_id: wardrobeId,
-      temperature: temperature
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ wardrobe_id: wardrobeId, temperature }),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to plan week' }));
-    throw new Error(error.detail || 'Failed to plan week');
-  }
-
-  return response.json();
 }
 

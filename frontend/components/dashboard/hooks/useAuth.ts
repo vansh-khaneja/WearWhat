@@ -1,37 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { getSession, logout as apiLogout } from '@/lib/api';
 
 export function useAuth() {
   const router = useRouter();
+  const pathname = usePathname();
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    const id = localStorage.getItem('user_id');
-    const email = localStorage.getItem('user_email') || '';
-    const username = localStorage.getItem('user_username') || '';
-    
-    if (!id) {
-      router.push('/login');
-      return;
-    }
+    let active = true;
+    (async () => {
+      const session = await getSession();
+      if (!active) return;
+      if (!session) {
+        setIsAuthenticated(false);
+        if (pathname !== '/login') router.replace('/login');
+        return;
+      }
+      setUserId(session.user_id || null);
+      setUserEmail(session.email || '');
+      setUserName(session.username || '');
+      setIsAuthenticated(true);
+    })();
+    return () => { active = false; };
+  }, [router, pathname]);
 
-    setUserId(id);
-    setUserEmail(email);
-    setUserName(username);
-    setIsAuthenticated(true);
-  }, [router]);
-
-  const logout = () => {
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_username');
+  const logout = async () => {
+    try {
+      await apiLogout();
+    } catch {}
     setIsAuthenticated(false);
-    router.push('/login');
+    router.replace('/login');
   };
 
   return {
@@ -39,7 +43,7 @@ export function useAuth() {
     userEmail,
     userName,
     isAuthenticated,
-    logout
+    logout,
   };
 }
 

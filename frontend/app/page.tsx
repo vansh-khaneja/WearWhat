@@ -7,10 +7,13 @@ import { TestimonialsSection } from "@/components/testimonials-section"
 import { EnterpriseSection } from "@/components/enterprise-section"
 import { CTASection } from "@/components/cta-section"
 import { Footer } from "@/components/footer"
+import { AuthRedirect } from "@/components/AuthRedirect"
 
 export default function Home() {
   return (
     <div className="min-h-screen relative overflow-hidden">
+      {/* Client-side auth check: redirects to dashboard if cookie session exists */}
+      <AuthRedirect />
       <div
         className="absolute inset-0"
         style={{

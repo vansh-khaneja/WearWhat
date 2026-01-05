@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { login, signUp } from '@/lib/api';
+import { signUp, login as backendLogin } from '@/lib/api';
 
 export default function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showSignup, setShowSignup] = useState(false);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -21,14 +22,17 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      const response = await login({ email, password });
-      localStorage.setItem('user_id', response.user_id);
-      if (response.email) {
-        localStorage.setItem('user_email', response.email);
+      // First: log into backend to set HttpOnly auth cookie for API calls
+      const backendResp = await backendLogin({ email, password });
+      if (backendResp?.user_id) {
+        try {
+          localStorage.setItem('user_id', backendResp.user_id);
+          if (backendResp.email) localStorage.setItem('user_email', backendResp.email);
+          if (backendResp.username) localStorage.setItem('user_username', backendResp.username);
+        } catch {}
       }
-      if (response.username) {
-        localStorage.setItem('user_username', response.username);
-      }
+
+      // Navigate to dashboard; middleware will allow based on backend cookie
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -43,8 +47,10 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      const response = await signUp({ username, email, password });
-      localStorage.setItem('user_id', response.user_id);
+      await signUp({ username, email, password });
+      // After signup, also log into backend to set cookie
+      await backendLogin({ email, password });
+      // Navigate to dashboard after backend sets cookie
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
@@ -94,6 +100,11 @@ export default function AuthPage() {
 
         {/* Auth Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
+          {searchParams?.get('reason') === 'session-expired' && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+              Your session expired. Please sign in again.
+            </div>
+          )}
           {!showSignup ? (
             <>
               <h1 className="text-3xl font-bold text-gray-900 mb-6">Log in</h1>
