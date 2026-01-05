@@ -5,21 +5,26 @@ FastAPI routes for uploading outfit images.
 
 import os
 import tempfile
-from fastapi import APIRouter, HTTPException, status, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, status, File, UploadFile, Depends
 from endpoints.outfit.models import UploadOutfitResponse, GetOutfitsResponse, GetOutfitsRequest, DeleteOutfitResponse, UpdateOutfitResponse, UpdateOutfitRequest, SuggestOutfitRequest, SuggestOutfitResponse, PlanWeekRequest, PlanWeekResponse, WeeklyOutfitDay, Outfit
 from image_tagging import tag_image
 from mongodb_uploader import upload_item, get_items, delete_item, update_item   
 from uuid import uuid4
 from cloudinary_uploader import upload_image
 from image_composer import create_composite_image
+from auth.deps import require_user
 
-router = APIRouter(prefix="/outfit", tags=["outfit"])
+router = APIRouter(
+    prefix="/outfit",
+    tags=["outfit"],
+    dependencies=[Depends(require_user)],
+)
 
 
 @router.post("/upload-outfit", response_model=UploadOutfitResponse, status_code=status.HTTP_201_CREATED)
 async def upload_outfit_endpoint(
     file: UploadFile = File(...),
-    wardrobe_id: str = Form(...)
+    user=Depends(require_user)
 ):
     """
     Upload an outfit image.
@@ -60,7 +65,7 @@ async def upload_outfit_endpoint(
         
         # Create document for MongoDB
         document = {
-            "wardrobe_id": wardrobe_id,
+            "wardrobe_id": user["user_id"],
             "item_id": item_id,
             "image_url": image_url,
             "tags": tagged_dict
@@ -93,7 +98,7 @@ async def upload_outfit_endpoint(
 
 
 @router.get("/get-outfits", response_model=GetOutfitsResponse, status_code=status.HTTP_200_OK)
-async def get_outfits_endpoint(wardrobe_id: str):
+async def get_outfits_endpoint(user=Depends(require_user)):
     """
     Get all outfits for a wardrobe.
     
@@ -103,7 +108,7 @@ async def get_outfits_endpoint(wardrobe_id: str):
     Returns:
         GetOutfitsResponse with list of outfits.
     """
-    items = get_items(wardrobe_id)
+    items = get_items(user["user_id"])
     # Map MongoDB documents to Outfit model format
     outfits = []
     for item in items:
@@ -142,7 +147,7 @@ async def update_outfit_endpoint(request: UpdateOutfitRequest):
 
 
 @router.post("/suggest-outfit", response_model=SuggestOutfitResponse, status_code=status.HTTP_200_OK)
-async def suggest_outfit_endpoint(request: SuggestOutfitRequest):
+async def suggest_outfit_endpoint(request: SuggestOutfitRequest, user=Depends(require_user)):
     """
     Suggest outfits based on wardrobe.
     
@@ -153,7 +158,7 @@ async def suggest_outfit_endpoint(request: SuggestOutfitRequest):
         SuggestOutfitResponse with 3-5 suggested outfits and a composite image.
     """
     # Get all outfits from wardrobe
-    items = get_items(request.wardrobe_id)
+    items = get_items(user["user_id"])  # ignore client-supplied wardrobe_id; use authenticated user_id
     
     # Map MongoDB documents to Outfit model format
     all_outfits = []
@@ -216,7 +221,7 @@ async def suggest_outfit_endpoint(request: SuggestOutfitRequest):
 
 
 @router.post("/plan-week", response_model=PlanWeekResponse, status_code=status.HTTP_200_OK)
-async def plan_week_endpoint(request: PlanWeekRequest):
+async def plan_week_endpoint(request: PlanWeekRequest, user=Depends(require_user)):
     """
     Generate weekly outfit plan (Monday to Sunday).
     
@@ -230,7 +235,7 @@ async def plan_week_endpoint(request: PlanWeekRequest):
     weekly_outfits = []
     
     # Get all outfits from wardrobe
-    items = get_items(request.wardrobe_id)
+    items = get_items(user["user_id"])  # ignore client-supplied wardrobe_id; use authenticated user_id
     
     # Map MongoDB documents to Outfit model format
     all_outfits = []

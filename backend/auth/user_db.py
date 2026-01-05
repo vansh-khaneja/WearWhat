@@ -132,3 +132,19 @@ def delete_user(user_id: str) -> int:
     """
     result = users_collection.delete_one({"user_id": user_id})
     return result.deleted_count
+
+
+def get_user_by_id(user_id: str):
+    """
+    Fetch a user by user_id.
+
+    Args:
+        user_id: The user_id of the user to fetch.
+
+    Returns:
+        Tuple of (user_id, username, email) if found, otherwise None.
+    """
+    user = users_collection.find_one({"user_id": user_id})
+    if not user:
+        return None
+    return user.get("user_id"), user.get("username"), user.get("email")
