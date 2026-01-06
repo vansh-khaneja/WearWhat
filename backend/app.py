@@ -32,7 +32,7 @@ app.include_router(outfit_router)
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "Welcome to WearWhat API"}
+    return {"message": "Wearwhat Backend 1.0.0"}
 
 
 @app.get("/health")
