@@ -8,7 +8,9 @@ from endpoints.authentication.models import SignUpRequest, LoginRequest, SignUpR
 from auth.user_db import login, sign_up, get_user_by_id
 from auth.cookie_utils import issue_token
 from auth.deps import require_user
-
+from dotenv import loadenv
+import os 
+loadenv()
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
@@ -79,7 +81,7 @@ async def login_endpoint(request: LoginRequest, response: Response):
     response.set_cookie(
         key="auth_token",
         value=token,
-        max_age=60,  # matches 1 minute token expiry
+        max_age=os.getenv('SESSION_TIMEOUT_SECONDS'),
         httponly=True,
         samesite="lax",
         secure=False,

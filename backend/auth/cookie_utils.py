@@ -5,10 +5,11 @@ import os
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+
 def issue_token(user_id: str):
     payload = {
         "user_id": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=1)
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=os.getenv('SESSION_TIMEOUT_SECONDS'))
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
