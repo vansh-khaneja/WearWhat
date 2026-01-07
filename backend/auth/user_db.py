@@ -175,3 +175,24 @@ def get_user_by_id(user_id: str):
     if not user:
         return None
     return user.get("user_id"), user.get("username"), user.get("email")
+
+
+def get_user_location(user_id: str):
+    """
+    Fetch user's location data by user_id.
+
+    Args:
+        user_id: The user_id of the user to fetch location for.
+
+    Returns:
+        Dict with latitude and longitude if location exists, otherwise None.
+    """
+    user = users_collection.find_one({"user_id": user_id})
+    if not user or not user.get("location"):
+        return None
+
+    location = user.get("location", {})
+    return {
+        "latitude": location.get("latitude"),
+        "longitude": location.get("longitude")
+    }

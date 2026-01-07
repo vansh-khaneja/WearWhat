@@ -48,7 +48,7 @@ async def create_weekly_plan_endpoint(request: PlanWeekRequest, user=Depends(req
 
     # Generate weekly plan using the planner service
     try:
-        daily_plans = generate_weekly_plan(all_outfits)
+        daily_plans = generate_weekly_plan(all_outfits, user["user_id"])
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

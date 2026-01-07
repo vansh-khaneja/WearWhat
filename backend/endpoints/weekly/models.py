@@ -8,6 +8,9 @@ class DailyPlan(BaseModel):
     day: str  # Monday, Tuesday, etc.
     image_url: Optional[str] = None  # Composite image URL
     outfit_ids: List[str]  # Array of outfit IDs for the day
+    temperature: Optional[float] = None  # Average temperature in Celsius
+    condition: Optional[str] = None  # Weather condition text
+    condition_icon: Optional[str] = None  # Weather condition icon URL
 
 
 class WeeklyPlan(BaseModel):
