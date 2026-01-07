@@ -32,7 +32,7 @@ export default function DashboardPage() {
   // Custom hooks
   const { userId, userEmail, userName, logout } = useAuth();
   const { outfits, loading: loadingOutfits, uploading, uploadMessage, uploadOutfit, deleteOutfit, updateOutfit } = useOutfits(userId, activeSection);
-  const { suggestedOutfits, compositeImageUrl, loading: loadingSuggestions, query, setQuery, getSuggestions, suggestionQuery, setSuggestionQuery } = useSuggestions(userId, temperature, activeSection);
+  const { suggestedOutfits, compositeImageUrl, loading: loadingSuggestions, query, setQuery, getSuggestions, suggestionQuery, setSuggestionQuery, todayWeather } = useSuggestions(userId, temperature, activeSection);
   const { weeklyOutfits, loading: loadingWeekPlan, progress: weekPlanProgress, planWeek } = useWeekPlanning(temperature);
   const { outfitModal, confirmModal, alertModal } = useModals();
 
@@ -178,7 +178,8 @@ export default function DashboardPage() {
           {/* Today's Suggestions Content */}
           {activeSection === 'today' && (
         <TodaysSuggestions
-          temperature={temperature}
+          temperature={todayWeather?.temperature || temperature}
+          condition={todayWeather?.condition}
           onGetSuggestions={handleGetSuggestions}
           suggestedOutfits={suggestedOutfits}
           compositeImageUrl={compositeImageUrl}

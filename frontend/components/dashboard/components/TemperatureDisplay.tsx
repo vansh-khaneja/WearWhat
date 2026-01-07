@@ -4,14 +4,16 @@ import { Thermometer } from 'lucide-react';
 
 interface TemperatureDisplayProps {
   temperature: number;
+  condition?: string;
   autoDetected?: boolean;
   variant?: 'default' | 'compact';
 }
 
-export default function TemperatureDisplay({ 
-  temperature, 
+export default function TemperatureDisplay({
+  temperature,
+  condition,
   autoDetected = true,
-  variant = 'default' 
+  variant = 'default'
 }: TemperatureDisplayProps) {
   if (variant === 'compact') {
     return (
@@ -27,6 +29,9 @@ export default function TemperatureDisplay({
                 <span className="text-2xl font-bold text-orange-700">{temperature}</span>
                 <span className="text-sm font-medium text-orange-600">°C</span>
               </div>
+              {condition && (
+                <p className="text-xs font-medium text-orange-600 mt-0.5">{condition}</p>
+              )}
             </div>
           </div>
           {autoDetected && (
@@ -55,6 +60,11 @@ export default function TemperatureDisplay({
             <span className="text-3xl font-bold text-orange-700">{temperature}</span>
             <span className="text-lg font-medium text-orange-600">°C</span>
           </div>
+          {condition && (
+            <div className="mt-2 text-center">
+              <span className="text-sm font-medium text-orange-600">{condition}</span>
+            </div>
+          )}
           {autoDetected && (
             <div className="px-3 py-1 bg-white/80 rounded-full border border-orange-200">
               <span className="text-xs font-medium text-orange-700">Auto-detected</span>

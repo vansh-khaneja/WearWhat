@@ -186,11 +186,23 @@ export async function updateOutfit(outfitId: string, tags: Record<string, any>):
 export interface SuggestOutfitRequest {
   temperature?: number;
   query?: string;
+  condition?: string;
+}
+
+export interface WeatherData {
+  temp_c?: number;
+  temp_f?: number;
+  condition_text?: string;
+  condition_icon?: string;
+  region?: string;
+  country?: string;
+  last_updated?: string;
 }
 
 export interface SuggestOutfitResponse {
   outfits: Outfit[];
   composite_image_url?: string;
+  weather?: WeatherData;
   result: boolean;
   message: string;
 }
@@ -198,11 +210,11 @@ export interface SuggestOutfitResponse {
 /**
  * Get suggested outfits
  */
-export async function suggestOutfits(temperature?: number, query?: string): Promise<SuggestOutfitResponse> {
+export async function suggestOutfits(temperature?: number, query?: string, condition?: string): Promise<SuggestOutfitResponse> {
   return apiFetch<SuggestOutfitResponse>('/outfit/suggest-outfit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ temperature, query }),
+    body: JSON.stringify({ temperature, query, condition }),
   });
 }
 
@@ -282,4 +294,5 @@ export async function outfitChat(message: string, temperature?: number, context?
     body: JSON.stringify({ message, temperature, context }),
   });
 }
+
 

@@ -7,6 +7,7 @@ import type { Outfit } from '@/lib/api';
 
 interface TodaysSuggestionsProps {
   temperature: number;
+  condition?: string;
   onGetSuggestions: (query?: string) => Promise<void>;
   suggestedOutfits: Outfit[];
   compositeImageUrl: string | null;
@@ -20,6 +21,7 @@ interface TodaysSuggestionsProps {
 
 export default function TodaysSuggestions({
   temperature,
+  condition,
   onGetSuggestions,
   suggestedOutfits,
   compositeImageUrl,
@@ -59,7 +61,7 @@ export default function TodaysSuggestions({
           
           {/* Temperature Display */}
           <div className="mb-6">
-            <TemperatureDisplay temperature={temperature} />
+            <TemperatureDisplay temperature={temperature} condition={condition} />
           </div>
 
           {/* Query Input */}
@@ -187,7 +189,7 @@ export default function TodaysSuggestions({
         
         {/* Temperature Display - Only in Chat Column */}
         <div className="mb-4 sm:mb-6">
-          <TemperatureDisplay temperature={temperature} variant="compact" />
+          <TemperatureDisplay temperature={temperature} condition={condition} variant="compact" />
         </div>
 
         {/* Query Input */}
