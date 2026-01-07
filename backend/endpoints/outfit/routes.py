@@ -111,6 +111,27 @@ async def update_outfit_endpoint(request: UpdateOutfitRequest):
 @router.post("/suggest-outfit", response_model=SuggestOutfitResponse, status_code=status.HTTP_200_OK)
 async def suggest_outfit_endpoint(request: SuggestOutfitRequest, user=Depends(require_user)):
 
+    # Log the weather-aware request for debugging
+    if request.condition:
+        print(f"Suggesting outfit for user {user['user_id']}: {request.temperature}°C, {request.condition}, query: {request.query}")
+
+    # Fetch weather data using user's location from MongoDB
+    weather_data = None
+    try:
+        from auth.user_db import get_user_location
+        from weather_data.service import get_today_weather
+
+        user_location = get_user_location(user["user_id"])
+        if user_location and user_location.get("latitude") is not None and user_location.get("longitude") is not None:
+            weather_result = await get_today_weather(user_location["latitude"], user_location["longitude"])
+            if weather_result and weather_result.get("today"):
+                weather_data = weather_result["today"]
+        else:
+            print(f"Warning: No location data found for user {user['user_id']}")
+    except Exception as e:
+        print(f"Warning: Failed to fetch weather data: {str(e)}")
+        # Continue without weather data
+
     items = get_items(user["user_id"])  # ignore client-supplied wardrobe_id; use authenticated user_id
     
     all_outfits = []
@@ -158,6 +179,7 @@ async def suggest_outfit_endpoint(request: SuggestOutfitRequest, user=Depends(re
     return SuggestOutfitResponse(
         outfits=selected_outfits,
         composite_image_url=composite_image_url,
+        weather=weather_data,
         result=True,
         message="Outfits suggested successfully"
     )

@@ -41,10 +41,24 @@ class SuggestOutfitRequest(BaseModel):
     """Request model for suggesting outfits"""
     temperature: Optional[float] = None
     query: Optional[str] = None
+    condition: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+class WeatherData(BaseModel):
+    """Weather data model"""
+    temp_c: Optional[float] = None
+    temp_f: Optional[float] = None
+    condition_text: Optional[str] = None
+    condition_icon: Optional[str] = None
+    region: Optional[str] = None
+    country: Optional[str] = None
+    last_updated: Optional[str] = None
 
 class SuggestOutfitResponse(BaseModel):
     """Response model for suggesting outfits"""
     outfits: List[Outfit]
     composite_image_url: Optional[str] = None
+    weather: Optional[WeatherData] = None
     result: bool
     message: str = "Outfits suggested successfully"
