@@ -16,12 +16,43 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const getUserLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.log('Geolocation is not supported by this browser.');
+        resolve(null);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          console.log('User location:', { latitude, longitude });
+          resolve({ latitude, longitude });
+        },
+        (error) => {
+          console.log('Error getting location:', error.message);
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    });
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      // Get user location
+      const location = await getUserLocation();
+
       // First: log into backend to set HttpOnly auth cookie for API calls
       const backendResp = await backendLogin({ email, password });
       if (backendResp?.user_id) {
@@ -47,6 +78,9 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
+      // Get user location
+      const location = await getUserLocation();
+
       await signUp({ username, email, password });
       // After signup, also log into backend to set cookie
       await backendLogin({ email, password });
