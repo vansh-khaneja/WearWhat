@@ -28,7 +28,7 @@ export default function AuthPage() {
         (position) => {
           const latitude = position.coords.latitude;
           const longitude = position.coords.longitude;
-          console.log('User location:', { latitude, longitude });
+          console.log('User location fetched:', { latitude, longitude });
           resolve({ latitude, longitude });
         },
         (error) => {
@@ -54,7 +54,12 @@ export default function AuthPage() {
       const location = await getUserLocation();
 
       // First: log into backend to set HttpOnly auth cookie for API calls
-      const backendResp = await backendLogin({ email, password });
+      const loginData: any = { email, password };
+      if (location) {
+        loginData.latitude = location.latitude;
+        loginData.longitude = location.longitude;
+      }
+      const backendResp = await backendLogin(loginData);
       if (backendResp?.user_id) {
         try {
           localStorage.setItem('user_id', backendResp.user_id);
@@ -81,9 +86,21 @@ export default function AuthPage() {
       // Get user location
       const location = await getUserLocation();
 
-      await signUp({ username, email, password });
+      // Create signup data with location if available
+      const signupData: any = { username, email, password };
+      if (location) {
+        signupData.latitude = location.latitude;
+        signupData.longitude = location.longitude;
+      }
+
+      await signUp(signupData);
       // After signup, also log into backend to set cookie
-      await backendLogin({ email, password });
+      const loginData: any = { email, password };
+      if (location) {
+        loginData.latitude = location.latitude;
+        loginData.longitude = location.longitude;
+      }
+      await backendLogin(loginData);
       // Navigate to dashboard after backend sets cookie
       router.push('/dashboard');
     } catch (err) {

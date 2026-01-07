@@ -8,11 +8,15 @@ export interface SignUpRequest {
   username: string;
   email: string;
   password: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface SignUpResponse {
