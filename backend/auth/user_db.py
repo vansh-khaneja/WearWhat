@@ -51,29 +51,31 @@ except Exception:
 
 def sign_up(auth: Dict[str, Any]) -> str:
     """
-    Sign up a new user with username, email and password.
-    
+    Sign up a new user with username, email, password and optional location.
+
     Args:
-        auth: Dictionary containing 'username', 'email' and 'password' keys.
-    
+        auth: Dictionary containing 'username', 'email', 'password' and optional 'latitude', 'longitude' keys.
+
     Returns:
         The user_id as a string.
-    
+
     Raises:
         ValueError: If email already exists or fields are missing
     """
     username = auth.get("username")
     email = auth.get("email")
     password = auth.get("password")
-    
+    latitude = auth.get("latitude")
+    longitude = auth.get("longitude")
+
     if not username or not email or not password:
         raise ValueError("Username, email and password are required")
-    
+
     # Check if user already exists
     existing_user = users_collection.find_one({"email": email})
     if existing_user:
         raise ValueError("User with this email already exists")
-    
+
     # Generate unique user_id
     user_id = str(uuid4())
     password_hash = hash_password(password)
@@ -86,7 +88,14 @@ def sign_up(auth: Dict[str, Any]) -> str:
         "created_at": datetime.utcnow().isoformat(),
     }
 
-    
+    # Add location data if provided
+    if latitude is not None and longitude is not None:
+        user_doc["location"] = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
     # Insert user into database
     users_collection.insert_one(user_doc)
     return user_id
@@ -94,30 +103,46 @@ def sign_up(auth: Dict[str, Any]) -> str:
 
 def login(auth: Dict[str, Any]):
     """
-    Login a user by verifying email and password.
-    
+    Login a user by verifying email and password, and optionally update location.
+
     Args:
-        auth: Dictionary containing 'email' and 'password' keys.
-    
+        auth: Dictionary containing 'email', 'password' and optional 'latitude', 'longitude' keys.
+
     Returns:
         The user_id, username and email as a tuple.
     """
     email = auth.get("email")
     password = auth.get("password")
-    
+    latitude = auth.get("latitude")
+    longitude = auth.get("longitude")
+
     if not email or not password:
         raise ValueError("Email and password are required")
-    
+
     # Find user by email
     user = users_collection.find_one({"email": email})
-    
+
     if not user:
         raise ValueError("User not found")
-    
+
     # Verify password (plain text comparison)
     if not verify_password(password, user.get("password")):
         raise ValueError("Invalid password")
 
+    # Update location if provided
+    if latitude is not None and longitude is not None:
+        users_collection.update_one(
+            {"user_id": user.get("user_id")},
+            {
+                "$set": {
+                    "location": {
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                }
+            }
+        )
 
     return user.get("user_id"), user.get("username"), user.get("email")
 

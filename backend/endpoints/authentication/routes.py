@@ -11,12 +11,14 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 @router.post("/signup", response_model=SignUpResponse, status_code=status.HTTP_201_CREATED)
 async def signup_endpoint(request: SignUpRequest):
-    
+
     try:
         auth_data = {
             "username": request.username,
             "email": request.email,
-            "password": request.password
+            "password": request.password,
+            "latitude": request.latitude,
+            "longitude": request.longitude
         }
         user_id = sign_up(auth_data)
         return SignUpResponse(user_id=user_id)
@@ -37,9 +39,11 @@ async def login_endpoint(request: LoginRequest, response: Response):
 
     auth_data = {
         "email": request.email,
-        "password": request.password
+        "password": request.password,
+        "latitude": request.latitude,
+        "longitude": request.longitude
     }
-    
+
     user_id, username, email = login(auth_data)
     
     if not user_id or not username or not email:
