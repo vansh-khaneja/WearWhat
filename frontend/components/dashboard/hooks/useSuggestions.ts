@@ -13,11 +13,11 @@ export function useSuggestions(userId: string | null, temperature: number, activ
 
   // Auto-load suggestions when "Today" section is first opened
   useEffect(() => {
-    if (activeSection === 'today' && suggestedOutfits.length === 0 && !loading && userId) {
+    if (activeSection === 'today' && suggestedOutfits.length === 0 && !loading) {
       const loadSuggestions = async () => {
         setLoading(true);
         try {
-          const response = await suggestOutfits(userId, temperature, query.trim() || undefined);
+          const response = await suggestOutfits(temperature, query.trim() || undefined);
           setSuggestedOutfits(response.outfits || []);
           setCompositeImageUrl(response.composite_image_url || null);
         } catch (error) {
@@ -33,13 +33,9 @@ export function useSuggestions(userId: string | null, temperature: number, activ
   }, [activeSection]);
 
   const getSuggestions = async (queryParam?: string) => {
-    if (!userId) {
-      throw new Error('Please log in to get suggestions');
-    }
-
     setLoading(true);
     try {
-      const response = await suggestOutfits(userId, temperature, queryParam || query.trim() || undefined);
+      const response = await suggestOutfits(temperature, queryParam || query.trim() || undefined);
       setSuggestedOutfits(response.outfits || []);
       setCompositeImageUrl(response.composite_image_url || null);
       if (queryParam !== undefined) {

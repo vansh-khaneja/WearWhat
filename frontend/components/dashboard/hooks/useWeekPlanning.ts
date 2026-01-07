@@ -1,62 +1,83 @@
 'use client';
 
-import { useState } from 'react';
-import { suggestOutfits } from '@/lib/api';
-import type { WeeklyOutfitDay } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { createWeeklyPlan, getWeeklyPlan } from '@/lib/api';
+import type { WeeklyPlan, DailyPlan, WeeklyOutfitDay } from '@/lib/api';
 
-export function useWeekPlanning(userId: string | null, temperature: number) {
-  const [weeklyOutfits, setWeeklyOutfits] = useState<WeeklyOutfitDay[]>([]);
+export function useWeekPlanning(temperature: number) {
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState({ current: 0, total: 7 });
+  const [progress, setProgress] = useState({ current: 0, total: 1 });
+
+  // Load existing weekly plan on mount
+  useEffect(() => {
+    const loadWeeklyPlan = async () => {
+      try {
+        const response = await getWeeklyPlan();
+        if (response.weekly_plans && response.weekly_plans.length > 0) {
+          setWeeklyPlan(response.weekly_plans[0]);
+        }
+      } catch (error) {
+        console.error('Failed to load weekly plan:', error);
+      }
+    };
+    loadWeeklyPlan();
+  }, []);
 
   const planWeek = async () => {
-    if (!userId) {
-      throw new Error('Please log in to plan your week');
-    }
-
     setLoading(true);
-    setProgress({ current: 0, total: 7 });
-    setWeeklyOutfits([]);
-
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const generatedOutfits: WeeklyOutfitDay[] = [];
+    setProgress({ current: 0, total: 1 });
 
     try {
-      // Generate outfits one by one to show progress
-      for (let i = 0; i < daysOfWeek.length; i++) {
-        setProgress({ current: i + 1, total: 7 });
-        
-        try {
-          const response = await suggestOutfits(userId, temperature);
-          if (response.outfits && response.outfits.length > 0) {
-            // Use the first outfit from the suggestion
-            const selectedOutfit = response.outfits[0];
-            generatedOutfits.push({
-              day: daysOfWeek[i],
-              outfit: selectedOutfit,
-              composite_image_url: response.composite_image_url || undefined
-            });
-          }
-        } catch (error) {
-          console.error(`Failed to generate outfit for ${daysOfWeek[i]}:`, error);
-          // Continue with other days even if one fails
-        }
-        
-        // Small delay to make progress visible
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      setProgress({ current: 0.5, total: 1 });
 
-      setWeeklyOutfits(generatedOutfits);
+      // Create new weekly plan
+      await createWeeklyPlan(temperature);
+
+      setProgress({ current: 1, total: 1 });
+
+      // Load the newly created plan
+      const response = await getWeeklyPlan();
+      if (response.weekly_plans && response.weekly_plans.length > 0) {
+        setWeeklyPlan(response.weekly_plans[0]);
+      }
     } catch (error) {
       throw error;
     } finally {
       setLoading(false);
-      setProgress({ current: 0, total: 7 });
+      setProgress({ current: 0, total: 1 });
     }
   };
 
+  // Convert daily plans to the format expected by components
+  const getWeeklyOutfits = () => {
+    if (!weeklyPlan) return [];
+
+    const daysOfWeek = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7'];
+    return daysOfWeek.map(dayKey => {
+      const dailyPlan = weeklyPlan.daily_plans[dayKey];
+      if (!dailyPlan || !dailyPlan.outfit_ids.length) return null;
+
+      // For now, create a mock outfit from the first outfit_id
+      // TODO: In the future, we might want to fetch the actual outfit details
+      const mockOutfit = {
+        outfit_id: dailyPlan.outfit_ids[0],
+        wardrobe_id: weeklyPlan.wardrobe_id,
+        image_url: dailyPlan.image_url || '',
+        tags: {}
+      };
+
+      return {
+        day: dailyPlan.day,
+        outfit: mockOutfit,
+        composite_image_url: dailyPlan.image_url
+      };
+    }).filter(Boolean) as any[]; // Type assertion for compatibility
+  };
+
   return {
-    weeklyOutfits,
+    weeklyPlan,
+    weeklyOutfits: getWeeklyOutfits(),
     loading,
     progress,
     planWeek

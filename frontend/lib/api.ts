@@ -180,7 +180,6 @@ export async function updateOutfit(outfitId: string, tags: Record<string, any>):
   });
 }
 export interface SuggestOutfitRequest {
-  wardrobe_id: string;
   temperature?: number;
   query?: string;
 }
@@ -195,34 +194,79 @@ export interface SuggestOutfitResponse {
 /**
  * Get suggested outfits
  */
-export async function suggestOutfits(wardrobeId: string, temperature?: number, query?: string): Promise<SuggestOutfitResponse> {
+export async function suggestOutfits(temperature?: number, query?: string): Promise<SuggestOutfitResponse> {
   return apiFetch<SuggestOutfitResponse>('/outfit/suggest-outfit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ wardrobe_id: wardrobeId, temperature, query }),
+    body: JSON.stringify({ temperature, query }),
   });
 }
 
-export interface WeeklyOutfitDay {
+export interface DailyPlan {
+  date: string;
   day: string;
-  outfit: Outfit;
-  composite_image_url?: string;
+  image_url?: string;
+  outfit_ids: string[];
 }
 
-export interface PlanWeekResponse {
-  weekly_outfits: WeeklyOutfitDay[];
+export interface WeeklyPlan {
+  plan_id: string;
+  wardrobe_id: string;
+  created_at: string;
+  week_start: string;
+  daily_plans: Record<string, DailyPlan>;
+}
+
+export interface CreateWeeklyPlanResponse {
+  result: boolean;
+  message: string;
+}
+
+export interface GetWeeklyPlanResponse {
+  weekly_plans: WeeklyPlan[];
+}
+
+export interface ChatRequest {
+  message: string;
+  temperature?: number;
+  context?: Record<string, any>;
+}
+
+export interface ChatResponse {
+  response: string;
+  image_urls?: string[];
   result: boolean;
   message: string;
 }
 
 /**
- * Generate weekly outfit plan
+ * Create weekly outfit plan
  */
-export async function planWeek(wardrobeId: string, temperature?: number): Promise<PlanWeekResponse> {
-  return apiFetch<PlanWeekResponse>('/outfit/plan-week', {
+export async function createWeeklyPlan(temperature?: number): Promise<CreateWeeklyPlanResponse> {
+  return apiFetch<CreateWeeklyPlanResponse>('/weekly/create-plan', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ temperature }),
+  });
+}
+
+/**
+ * Get weekly plan for current user
+ */
+export async function getWeeklyPlan(): Promise<GetWeeklyPlanResponse> {
+  return apiFetch<GetWeeklyPlanResponse>('/weekly/plan', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Chat about outfits and fashion with AI
+ */
+export async function outfitChat(message: string, temperature?: number, context?: Record<string, any>): Promise<ChatResponse> {
+  return apiFetch<ChatResponse>('/chat/outfit-chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ wardrobe_id: wardrobeId, temperature }),
+    body: JSON.stringify({ message, temperature, context }),
   });
 }
 

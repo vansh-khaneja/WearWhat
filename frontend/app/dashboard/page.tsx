@@ -16,11 +16,12 @@ import { useOutfits } from '@/components/dashboard/hooks/useOutfits';
 import { useSuggestions } from '@/components/dashboard/hooks/useSuggestions';
 import { useWeekPlanning } from '@/components/dashboard/hooks/useWeekPlanning';
 import { useModals } from '@/components/dashboard/hooks/useModals';
+import { outfitChat } from '@/lib/api';
 
 export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState('today');
-  const [temperature] = useState<number>(22); // Default static temperature in Celsius
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; content: string }>>([
+  const [temperature] = useState<number>(0); // Default static temperature in Celsius
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; content: string; image_urls?: string[] }>>([
     { role: 'ai', content: "Hi! I'm your Style AI assistant. Ask me anything about styling, outfit suggestions, or fashion advice!" }
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -32,7 +33,7 @@ export default function DashboardPage() {
   const { userId, userEmail, userName, logout } = useAuth();
   const { outfits, loading: loadingOutfits, uploading, uploadMessage, uploadOutfit, deleteOutfit, updateOutfit } = useOutfits(userId, activeSection);
   const { suggestedOutfits, compositeImageUrl, loading: loadingSuggestions, query, setQuery, getSuggestions, suggestionQuery, setSuggestionQuery } = useSuggestions(userId, temperature, activeSection);
-  const { weeklyOutfits, loading: loadingWeekPlan, progress: weekPlanProgress, planWeek } = useWeekPlanning(userId, temperature);
+  const { weeklyOutfits, loading: loadingWeekPlan, progress: weekPlanProgress, planWeek } = useWeekPlanning(temperature);
   const { outfitModal, confirmModal, alertModal } = useModals();
 
   // Section titles and descriptions
@@ -125,15 +126,25 @@ export default function DashboardPage() {
     });
   };
 
-  const handleChatSend = (message: string) => {
+  const handleChatSend = async (message: string) => {
     setChatMessages(prev => [...prev, { role: 'user', content: message }]);
     setChatInput('');
 
-    // Simulate AI response (replace with actual API call later)
-    setTimeout(() => {
-      const aiResponse = `I understand you're asking about "${message}". This is a placeholder response. Connect me to an AI API to get real style advice!`;
-      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
-    }, 1000);
+    try {
+      // Call the outfit chat API
+      const response = await outfitChat(message, temperature);
+      setChatMessages(prev => [...prev, {
+        role: 'ai',
+        content: response.response,
+        image_urls: response.image_urls
+      }]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      setChatMessages(prev => [...prev, {
+        role: 'ai',
+        content: 'Sorry, I encountered an error while processing your message. Please try again.'
+      }]);
+    }
   };
 
   return (

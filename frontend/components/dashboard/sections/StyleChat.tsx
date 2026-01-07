@@ -6,6 +6,7 @@ import { Sparkles, User, Send } from 'lucide-react';
 interface ChatMessage {
   role: 'user' | 'ai';
   content: string;
+  image_urls?: string[];
 }
 
 interface StyleChatProps {
@@ -56,6 +57,25 @@ export default function StyleChat({
               }`}
             >
               <p className="text-sm leading-relaxed">{message.content}</p>
+              {message.image_urls && message.image_urls.length > 0 && (
+                <div className="mt-3">
+                  <div className={`grid gap-2 ${
+                    message.image_urls.length === 1 ? 'grid-cols-1' :
+                    message.image_urls.length === 2 ? 'grid-cols-2' :
+                    'grid-cols-2 sm:grid-cols-3'
+                  }`}>
+                    {message.image_urls.map((imageUrl, imgIndex) => (
+                      <img
+                        key={imgIndex}
+                        src={imageUrl}
+                        alt={`Style suggestion ${imgIndex + 1}`}
+                        className="rounded-lg w-full h-auto object-cover"
+                        style={{ maxHeight: '150px' }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             {message.role === 'user' && (
               <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
