@@ -52,7 +52,7 @@ async def login_endpoint(request: LoginRequest, response: Response):
     response.set_cookie(
         key="auth_token",
         value=token,
-        max_age=os.getenv('SESSION_TIMEOUT_SECONDS'),
+        max_age=int(os.getenv('SESSION_TIMEOUT_SECONDS', '3600')),
         httponly=True,
         samesite="lax",
         secure=False,

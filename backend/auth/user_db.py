@@ -85,6 +85,7 @@ def sign_up(auth: Dict[str, Any]) -> str:
         "password": password_hash,
         "created_at": datetime.utcnow().isoformat(),
     }
+
     
     # Insert user into database
     users_collection.insert_one(user_doc)
@@ -116,7 +117,8 @@ def login(auth: Dict[str, Any]):
     # Verify password (plain text comparison)
     if not verify_password(password, user.get("password")):
         raise ValueError("Invalid password")
-    
+
+
     return user.get("user_id"), user.get("username"), user.get("email")
 
 

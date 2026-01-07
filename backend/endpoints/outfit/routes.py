@@ -1,9 +1,10 @@
 import os
 import tempfile
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status, File, UploadFile, Depends
-from endpoints.outfit.models import UploadOutfitResponse, GetOutfitsResponse, GetOutfitsRequest, DeleteOutfitResponse, UpdateOutfitResponse, UpdateOutfitRequest, SuggestOutfitRequest, SuggestOutfitResponse, PlanWeekRequest, PlanWeekResponse, WeeklyOutfitDay, Outfit
+from endpoints.outfit.models import UploadOutfitResponse, GetOutfitsResponse, DeleteOutfitResponse, UpdateOutfitResponse, UpdateOutfitRequest, SuggestOutfitRequest, SuggestOutfitResponse
 from image_tagging import tag_image
-from mongodb_uploader import upload_item, get_items, delete_item, update_item   
+from mongodb_uploader import upload_item, get_items, delete_item, update_item, upload_weekly_plan, get_weekly_plan   
 from uuid import uuid4
 from cloudinary_uploader import upload_image
 from image_composer import create_composite_image
@@ -161,45 +162,3 @@ async def suggest_outfit_endpoint(request: SuggestOutfitRequest, user=Depends(re
         message="Outfits suggested successfully"
     )
 
-
-
-@router.post("/plan-week", response_model=PlanWeekResponse, status_code=status.HTTP_200_OK)
-async def plan_week_endpoint(request: PlanWeekRequest, user=Depends(require_user)):
-   
-    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    weekly_outfits = []
-    
-    items = get_items(user["user_id"]) 
-    
-    all_outfits = []
-    for item in items:
-        outfit = {
-            "outfit_id": item.get("item_id", ""),
-            "wardrobe_id": item.get("wardrobe_id", ""),
-            "image_url": item.get("image_url", ""),
-            "tags": item.get("tags", {})
-        }
-        all_outfits.append(outfit)
-    
-    if not all_outfits:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No outfits found in wardrobe. Please add some outfits first."
-        )
-    
-    import random
-    for day in days_of_week:
-        selected_outfit_dict = random.choice(all_outfits)
-        selected_outfit = Outfit(**selected_outfit_dict)
-        
-        weekly_outfits.append(WeeklyOutfitDay(
-            day=day,
-            outfit=selected_outfit,
-            composite_image_url=selected_outfit.image_url
-        ))
-    
-    return PlanWeekResponse(
-        weekly_outfits=weekly_outfits,
-        result=True,
-        message="Weekly plan generated successfully"
-    )
