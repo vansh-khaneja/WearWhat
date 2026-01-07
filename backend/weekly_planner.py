@@ -27,12 +27,12 @@ def generate_weekly_plan(outfits: List[Dict[str, Any]]) -> Dict[str, DailyPlan]:
     if not outfits:
         raise ValueError("No outfits provided for weekly plan generation")
 
-    # Generate daily plans for the next 7 days
+    # Generate daily plans for the next 3 days
     now = datetime.now(timezone.utc)
     today = now.date()
     daily_plans = {}
 
-    for i in range(7):
+    for i in range(3):
         current_date = today + timedelta(days=i)
         day_name = current_date.strftime("%A")  # Monday, Tuesday, etc.
 
