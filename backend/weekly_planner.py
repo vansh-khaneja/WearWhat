@@ -16,7 +16,7 @@ from weather_data.service import get_weather_forecast
 from auth.user_db import get_user_location
 
 
-def generate_weekly_plan(outfits: List[Dict[str, Any]], user_id: str) -> Dict[str, DailyPlan]:
+async def generate_weekly_plan(outfits: List[Dict[str, Any]], user_id: str) -> Dict[str, DailyPlan]:
     """
     Generate a weekly plan with random outfit selections, composite images, and weather data.
 
@@ -36,7 +36,7 @@ def generate_weekly_plan(outfits: List[Dict[str, Any]], user_id: str) -> Dict[st
 
     if user_location:
         # Get weather forecast for the user's location
-        weather_data = get_weather_forecast(
+        weather_data = await get_weather_forecast(
             latitude=user_location["latitude"],
             longitude=user_location["longitude"],
             days=3
