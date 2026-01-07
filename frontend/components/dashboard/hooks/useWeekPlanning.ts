@@ -7,7 +7,7 @@ import type { WeeklyPlan, DailyPlan, WeeklyOutfitDay } from '@/lib/api';
 export function useWeekPlanning(temperature: number) {
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState({ current: 0, total: 1 });
+  const [progress, setProgress] = useState({ current: 0, total: 3 });
 
   // Load existing weekly plan on mount
   useEffect(() => {
@@ -26,15 +26,20 @@ export function useWeekPlanning(temperature: number) {
 
   const planWeek = async () => {
     setLoading(true);
-    setProgress({ current: 0, total: 1 });
+    setProgress({ current: 0, total: 3 });
 
     try {
-      setProgress({ current: 0.5, total: 1 });
+      // Simulate progress for 3 days
+      setProgress({ current: 1, total: 3 });
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setProgress({ current: 2, total: 3 });
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Create new weekly plan
       await createWeeklyPlan(temperature);
 
-      setProgress({ current: 1, total: 1 });
+      setProgress({ current: 3, total: 3 });
 
       // Load the newly created plan
       const response = await getWeeklyPlan();
@@ -45,7 +50,7 @@ export function useWeekPlanning(temperature: number) {
       throw error;
     } finally {
       setLoading(false);
-      setProgress({ current: 0, total: 1 });
+      setProgress({ current: 0, total: 3 });
     }
   };
 
@@ -53,7 +58,7 @@ export function useWeekPlanning(temperature: number) {
   const getWeeklyOutfits = () => {
     if (!weeklyPlan) return [];
 
-    const daysOfWeek = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7'];
+    const daysOfWeek = ['day1', 'day2', 'day3'];
     return daysOfWeek.map(dayKey => {
       const dailyPlan = weeklyPlan.daily_plans[dayKey];
       if (!dailyPlan || !dailyPlan.outfit_ids.length) return null;

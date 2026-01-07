@@ -230,6 +230,12 @@ export interface GetWeeklyPlanResponse {
   weekly_plans: WeeklyPlan[];
 }
 
+export interface WeeklyOutfitDay {
+  day: string;
+  outfit: Outfit;
+  composite_image_url?: string;
+}
+
 export interface ChatRequest {
   message: string;
   temperature?: number;

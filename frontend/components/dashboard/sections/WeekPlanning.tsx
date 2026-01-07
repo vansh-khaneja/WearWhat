@@ -20,7 +20,7 @@ export default function WeekPlanning({
   temperature = 22
 }: WeekPlanningProps) {
   if (loadingWeekPlan) {
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const daysOfWeek = ['Today', 'Tomorrow', 'Day After Tomorrow'];
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
         <div className="max-w-2xl mx-auto">
@@ -32,7 +32,7 @@ export default function WeekPlanning({
               Generating Your Weekly Plan
             </h2>
             <p className="text-gray-600">
-              Creating outfits for each day of the week...
+              Creating outfits for the next 3 days...
             </p>
           </div>
           
@@ -72,7 +72,7 @@ export default function WeekPlanning({
             Plan your week
           </h2>
           <p className="text-gray-600 mb-2">
-            Plan outfits for the entire week based on your schedule and weather
+            Plan outfits for the next 3 days based on your schedule and weather
           </p>
           <button 
             onClick={onPlanWeek}
@@ -83,7 +83,7 @@ export default function WeekPlanning({
             Plan Week
           </button>
           <p className="mt-4 text-sm text-gray-500">
-            Weekly view • Weather forecast • Schedule integration
+            3-Day view • Weather forecast • Schedule integration
           </p>
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function WeekPlanning({
             Your Weekly Plan
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Outfits for Monday to Sunday
+            Outfits for the next 3 days
           </p>
         </div>
         <button 
