@@ -234,6 +234,9 @@ export interface WeeklyOutfitDay {
   day: string;
   outfit: Outfit;
   composite_image_url?: string;
+  temperature?: number;
+  condition?: string;
+  condition_icon?: string;
 }
 
 export interface ChatRequest {

@@ -5,7 +5,6 @@ import type { WeeklyOutfitDay } from '@/lib/api';
 
 interface WeekCarouselProps {
   weeklyOutfits: WeeklyOutfitDay[];
-  temperature?: number;
 }
 
 // Helper function to get date for a day of the week
@@ -35,7 +34,7 @@ function getDateForDay(dayName: string): string {
   return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function WeekCarousel({ weeklyOutfits, temperature = 22 }: WeekCarouselProps) {
+export default function WeekCarousel({ weeklyOutfits }: WeekCarouselProps) {
   return (
     <div className="w-full">
       {/* Grid Layout - Responsive */}
@@ -60,10 +59,18 @@ export default function WeekCarousel({ weeklyOutfits, temperature = 22 }: WeekCa
                         <span className="font-medium">{dateStr}</span>
                       </div>
                     </div>
-                    {temperature && (
+                    {dayOutfit.temperature && (
                       <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
                         <Thermometer className="w-4 h-4 text-orange-600" />
-                        <span className="text-sm font-bold text-orange-700">{temperature}°C</span>
+                        <span className="text-sm font-bold text-orange-700">{dayOutfit.temperature}°C</span>
+                      </div>
+                    )}
+                    {dayOutfit.condition && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-blue-50 to-blue-50 rounded-lg border border-blue-200">
+                        {dayOutfit.condition_icon && (
+                          <img src={dayOutfit.condition_icon} alt={dayOutfit.condition} className="w-4 h-4" />
+                        )}
+                        <span className="text-sm font-medium text-blue-700">{dayOutfit.condition}</span>
                       </div>
                     )}
                   </div>

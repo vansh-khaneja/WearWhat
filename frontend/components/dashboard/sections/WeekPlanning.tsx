@@ -111,7 +111,7 @@ export default function WeekPlanning({
         </button>
       </div>
       
-      <WeekCarousel weeklyOutfits={weeklyOutfits} temperature={temperature} />
+      <WeekCarousel weeklyOutfits={weeklyOutfits} />
     </div>
   );
 }

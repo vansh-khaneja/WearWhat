@@ -75,7 +75,10 @@ export function useWeekPlanning(temperature: number) {
       return {
         day: dailyPlan.day,
         outfit: mockOutfit,
-        composite_image_url: dailyPlan.image_url
+        composite_image_url: dailyPlan.image_url,
+        temperature: dailyPlan.temperature,
+        condition: dailyPlan.condition,
+        condition_icon: dailyPlan.condition_icon
       };
     }).filter(Boolean) as any[]; // Type assertion for compatibility
   };
